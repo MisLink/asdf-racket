@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+set -eu
+
+# copy from kennyp/asdf-golang
+get_platform() {
+  local platform=""
+  local platform_check
+  platform_check="$(uname | tr '[:upper:]' '[:lower:]')"
+
+  case "$platform_check" in
+    linux) platform="linux" ;;
+    darwin) platform="macosx" ;;
+    *)
+      echo "Platform '${platform}' not supported!"
+      exit 1
+      ;;
+  esac
+
+  printf "%s" "$platform"
+}
+
+get_arch() {
+  local arch=""
+  local arch_check
+  arch_check=$(uname -m)
+  case "${arch_check}" in
+    x86_64 | amd64) arch="x86_64" ;;
+    aarch64 | arm64) arch="aarch64" ;;
+    *)
+      echo "Arch '${arch_check}' not supported!"
+      exit 1
+      ;;
+  esac
+
+  printf "%s" "$arch"
+}
+
+get_arch_and_platform() {
+  local arch_and_platform
+  local platform
+  local arch
+
+  platform=$(get_platform)
+  arch=$(get_arch)
+
+  arch_and_platform="${arch}-${platform}"
+
+  case "${arch_and_platform}" in
+    x86_64-linux | x86_64-macosx | aarch64-macosx) ;;
+    *)
+      echo "Arch and platform '${arch_and_platform}' not supported!"
+      exit 1
+      ;;
+  esac
+
+  printf "%s" "$arch_and_platform"
+}
+
+racket_download() {
+  local version=$1
+  local download_path=$2
+  local arch_and_platform
+  arch_and_platform=$(get_arch_and_platform)
+  local download_url
+  download_url="https://download.racket-lang.org/releases/${version}/installers/racket-minimal-${version}-${arch_and_platform}-cs.tgz"
+  echo "$download_url"
+  curl -L "${download_url}" -o "${download_path}/archive.tgz"
+}
+
+racket_download "$ASDF_INSTALL_VERSION" "$ASDF_DOWNLOAD_PATH"
